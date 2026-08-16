@@ -2,7 +2,7 @@
 
 ## Visual Analysis of the Evolution and Characteristics of Football Across Europe's Big Five Leagues Over 20 Seasons
 
-**Link to the project:** _[INSERT STREAMLIT URL HERE]_  **Source code:** _[INSERT GITHUB URL HERE]_
+**Link to the project:** https://big5-football-visualization.streamlit.app/  **Source code:** https://github.com/FadiKais1/big5-football-visualization
 
 | # | Name | ID | # | Name | ID |
 |---|---|---|---|---|---|

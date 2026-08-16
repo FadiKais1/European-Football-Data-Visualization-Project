@@ -4,7 +4,7 @@ An interactive analysis of **36,197 football matches** from Europe's Big Five
 leagues (2006/07–2025/26), using the COVID-19 empty-stadium period as a natural
 experiment on the source of home advantage.
 
-**🔗 Live application:** _add the Streamlit Cloud URL here after deploying_
+**🔗 Live application:** https://big5-football-visualization.streamlit.app/
 
 > Course project in Information Visualization.
 > Tom Rosenberg · Ofir Kaplan · Fadi Kees · Daniel Ifrim
