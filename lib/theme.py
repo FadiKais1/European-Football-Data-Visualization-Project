@@ -209,6 +209,21 @@ h3 {{ font-size: 1.05rem; margin-top: 1.2rem; }}
     max-width: 74ch;
 }}
 
+/* Description under a navigation link on the landing page. */
+.nav-blurb {{
+    font-size: .87rem;
+    line-height: 1.5;
+    color: {INK_SOFT};
+    margin: .15rem 0 1.1rem;
+    max-width: 46ch;
+}}
+
+/* Page links read as navigation, not as inline prose links. */
+[data-testid="stPageLink"] a {{
+    padding: .1rem 0;
+    font-size: 1.02rem;
+}}
+
 .caveat {{
     background: {SURFACE};
     border: 1px solid {RULE};

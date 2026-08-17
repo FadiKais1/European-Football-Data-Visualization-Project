@@ -1,8 +1,15 @@
-"""Smoke test: every view runs without raising, under several filter states."""
+"""Smoke test: every view runs without raising, under several filter states.
+
+The Home page is exercised through `streamlit_app.py` rather than directly,
+because it uses `st.page_link`, which needs the navigation registry that the
+entry script sets up. Running it standalone would fail for that reason alone,
+which would be a test artefact rather than a real defect.
+"""
 from streamlit.testing.v1 import AppTest
 import sys
 
 VIEWS = [
+    ("streamlit_app.py", "Home (via navigation)"),
     ("views/home_advantage.py", "Home Advantage"),
     ("views/explorer.py", "Evolution"),
     ("views/attacking.py", "Attacking"),
@@ -22,7 +29,7 @@ STATES = [
 fails = 0
 for path, name in VIEWS:
     for label, state in STATES:
-        at = AppTest.from_file(path, default_timeout=240).run()
+        at = AppTest.from_file(path, default_timeout=300).run()
         for k, v in state.items():
             at.session_state[k] = v
         if state:

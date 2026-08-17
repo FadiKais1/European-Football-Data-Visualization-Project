@@ -33,8 +33,9 @@ they stopped being punished more for it.
 
 ## Dashboards
 
-| Dashboard | Question it answers |
+| Page | What it does |
 |---|---|
+| **Home** | Landing page: the dataset, the question, the headline finding, and links to each dashboard |
 | **Home Advantage** | How has home advantage changed, and how does it differ by league? |
 | **Evolution of the Big Five** | Any measure across all league-seasons, with click-to-drill detail |
 | **Attacking & Efficiency** | How have attacking volume and scoring efficiency changed? |
@@ -95,6 +96,7 @@ shortly before submitting so a reviewer arrives at a running application.
 ```
 streamlit_app.py              Entry point; declares navigation
 views/
+  home.py                     Landing page
   home_advantage.py           Dashboard 1
   explorer.py                 Dashboard 2
   attacking.py                Dashboard 3

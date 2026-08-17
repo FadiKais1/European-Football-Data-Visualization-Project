@@ -26,12 +26,20 @@ from lib import theme as T
 T.configure_page()
 T.inject_css()
 
+START = [
+    st.Page(
+        "views/home.py",
+        title="Home",
+        icon=":material/home:",
+        default=True,
+    ),
+]
+
 DASHBOARDS = [
     st.Page(
         "views/home_advantage.py",
         title="Home Advantage",
         icon=":material/stadium:",
-        default=True,
     ),
     st.Page(
         "views/explorer.py",
@@ -68,7 +76,9 @@ REFERENCE = [
     ),
 ]
 
-navigation = st.navigation({"Dashboards": DASHBOARDS, "Reference": REFERENCE})
+navigation = st.navigation(
+    {"Start": START, "Dashboards": DASHBOARDS, "Reference": REFERENCE}
+)
 
 with st.sidebar:
     st.markdown(

@@ -148,8 +148,9 @@ The quality report is produced by the same script that produces the data, comput
 
 The solution is an interactive web application of **six linked dashboards**, built with Streamlit and Plotly and deployed publicly. Each supporting research question has a dedicated dashboard.
 
-| Dashboard | Question | Role |
+| Page | Question | Role |
 |---|---|---|
+| Home | — | Landing page: dataset, research questions, headline finding, and navigation to each dashboard |
 | 1. Home Advantage | Supporting 1 | Establishes home advantage, its variation by league, and its response to empty stadiums |
 | 2. Evolution of the Big Five | Main | Any measure across all league-seasons, result composition, competitive balance, with drill-down |
 | 3. Attacking and Efficiency | Supporting 2 | Attacking volume against scoring efficiency, and what a half-time lead is worth |
@@ -165,7 +166,7 @@ Directly beneath sits the chart explaining the mechanism: **the difference betwe
 
 ### How the application is used
 
-It is designed to be read in sequence but explored freely. A user begins on **Dashboard 1**, which presents the argument. Having seen the claim, they can test it: **Dashboard 2** shows any of nine measures across every league-season as a heatmap, so the user can look for the empty-stadium band where it should appear and confirm its absence where it should not. **Dashboard 3** separates attacking volume from scoring efficiency. **Dashboard 4** moves from averages to individual clubs, asking whether the pattern holds for a team the user knows. **Dashboard 5** tests the mechanism at the level of individual referees. **Dashboard 6** steps back to how the five leagues differ and whether they are converging.
+It is designed to be read in sequence but explored freely. A user arrives on the **Home** page, which states the dataset, the research questions and the headline finding, and links to the dashboard that answers each question — so the structure of the project is visible before any single chart is read. From there a user typically moves to **Dashboard 1**, which presents the argument. Having seen the claim, they can test it: **Dashboard 2** shows any of nine measures across every league-season as a heatmap, so the user can look for the empty-stadium band where it should appear and confirm its absence where it should not. **Dashboard 3** separates attacking volume from scoring efficiency. **Dashboard 4** moves from averages to individual clubs, asking whether the pattern holds for a team the user knows. **Dashboard 5** tests the mechanism at the level of individual referees. **Dashboard 6** steps back to how the five leagues differ and whether they are converging.
 
 ### Interaction
 
