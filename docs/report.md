@@ -2,13 +2,13 @@
 
 ## Visual Analysis of the Evolution and Characteristics of Football Across Europe's Big Five Leagues Over 20 Seasons
 
-**Links to the Project App:** https://big5-football-visualization-tu7tvbq7vts4qkdehkkcuu.streamlit.app/
-**Source code:** https://github.com/FadiKais1/big5-football-visualization
+**Link to the project:** https://big5-football-visualization-tu7tvbq7vts4qkdehkkcuu.streamlit.app/
+**Source code:** https://github.com/FadiKais1/big5-football-visualization.git
 
 | # | Name | ID | # | Name | ID |
 |---|---|---|---|---|---|
-| 1 | Tom Rosenberg | 211622220 | 3 | Fadi Kees | _[ID]_ |
-| 2 | Ofir Kaplan | _[ID]_ | 4 | Daniel Ifrim | _[ID]_ |
+| 1 | Tom Rosenberg | 211622220 | 3 | Fadi Kees | 324222512 |
+| 2 | Ofir Kaplan | 214683336 | 4 | Daniel Ifrim | 318400678 |
 
 *Submitted as a group of four with the lecturer's prior approval.*
 
@@ -182,7 +182,7 @@ It is designed to be read in sequence but explored freely. A user begins on **Da
 
 **Why these chart types** — each chosen for its question, not for variety. *Line charts* for season timelines, because the question concerns change over an ordered variable. *Bar charts with conditional colour* for booking bias, because the value is a signed difference and the sign matters. *Slope charts* for per-league comparison across crowd conditions, because the question is about direction of change, which a slope encodes directly as the tilt of a line. *Dumbbell charts* for home-versus-away statistics, because the gap is the quantity of interest and a dumbbell makes it the dominant visual element. *A heatmap* for the league-season grid, because the task is spotting an anomalous cell among a hundred. *A standardised dot plot* for the league fingerprints, with a radar view offered alongside it. The dot plot is the default because radar encodes magnitude as area, which exaggerates differences, and the shape it draws changes if the axes are reordered; radar is retained as an option because it makes a league's overall shape easier to recognise at a glance, and presenting both lets the reader see the distortion for themselves. *A Sankey diagram* for the half-time to full-time transition, because the quantity of interest is how a population divides and recombines between two stages.
 
-**Why this use of colour.** Colour encodes the analytical variable rather than decorating the page: amber for matches played before a crowd, steel blue for empty stadiums. Because amber returns in the third position of every crowd-condition chart, the palette itself carries the finding — the effect disappears and comes back. League colours were chosen to stay distinguishable in greyscale and under common forms of colour vision deficiency.
+**Why this use of colour.** Colour encodes the analytical variable rather than decorating the page: amber for matches played before a crowd, steel blue for empty stadiums. Because amber returns in the third position of every crowd-condition chart, the palette itself carries the finding — the effect disappears and comes back. Wherever colour carries meaning that is not already given by an axis label, the categories are exposed in a legend rather than explained only in the surrounding text, so no chart depends on its caption to be readable. League colours were chosen to stay distinguishable in greyscale and under common forms of colour vision deficiency.
 
 ### Advantages
 

@@ -240,7 +240,11 @@ stack.update_xaxes(categoryorder="array", categoryarray=seasons, tickangle=-45)
 stack.update_layout(
     title="Composition of results by season",
     xaxis_title="Season", yaxis_title="Share of matches (%)",
-    height=400, hovermode="x unified",
+    height=400,
+    # A shared label is right here: the three shares sum to 100% and are
+    # read together. yhoverformat is set explicitly so the values are
+    # rounded rather than printed at full float precision.
+    hovermode="x unified", yaxis=dict(hoverformat=".1f"),
 )
 stack.update_yaxes(ticksuffix="%", range=[0, 100])
 st.plotly_chart(stack, width="stretch")
@@ -359,22 +363,42 @@ with d2:
         detail["goal_difference"].astype("Int16").value_counts().sort_index().reset_index()
     )
     dist.columns = ["goal_difference", "count"]
-    colors = [
-        T.CROWD if v > 0 else (T.EMPTY if v < 0 else T.MUTED)
-        for v in dist["goal_difference"]
-    ]
-    bar = go.Figure(go.Bar(
-        x=dist["goal_difference"], y=dist["count"],
-        marker=dict(color=colors),
-        hovertemplate="Goal difference %{x}<br>%{y:,} matches<extra></extra>",
-    ))
+
+    # One trace per outcome so the colour encoding is legended rather than
+    # explained only in the caption beneath the chart.
+    bar = go.Figure()
+    for label, mask, colour in (
+        ("Home win", dist["goal_difference"] > 0, T.CROWD),
+        ("Draw", dist["goal_difference"] == 0, T.MUTED),
+        ("Away win", dist["goal_difference"] < 0, T.EMPTY),
+    ):
+        part = dist[mask]
+        if part.empty:
+            continue
+        bar.add_trace(go.Bar(
+            x=part["goal_difference"], y=part["count"],
+            name=label, marker=dict(color=colour),
+            hovertemplate="Goal difference %{x}<br>%{y:,} matches<extra>"
+                          + label + "</extra>",
+        ))
+
+    # Splitting one bar chart into three traces makes Plotly widen the
+    # autorange on both axes, which leaves dead space and lets the count
+    # axis run below zero. Both ranges are therefore set from the data.
+    lo = int(dist["goal_difference"].min()) - 1
+    hi = int(dist["goal_difference"].max()) + 1
+
     bar.update_layout(
         title="Match outcomes by goal difference",
         xaxis_title="Home goals − away goals",
-        yaxis_title="Matches", height=330, showlegend=False, hovermode="closest",
+        yaxis_title="Matches", height=360,
+        showlegend=True,
+        barmode="overlay", hovermode="closest",
+        xaxis=dict(range=[lo, hi], dtick=1),
+        yaxis=dict(rangemode="tozero"),
     )
     st.plotly_chart(bar, width="stretch")
     T.readout(
-        "Amber bars are home wins, steel blue away wins, grey draws. "
-        "An asymmetric distribution is home advantage made visible."
+        "An asymmetric distribution — more mass on the positive side — is home "
+        "advantage made visible for this single league-season."
     )

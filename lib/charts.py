@@ -125,22 +125,39 @@ def card_gap_timeline(df: pd.DataFrame, seasons: list[str]) -> go.Figure:
     and returns when crowds do.
     """
     sub = df.set_index("season").reindex(seasons).reset_index()
-    colors = [
-        T.EMPTY if s in COVID_SEASONS else T.CROWD for s in sub["season"]
-    ]
+    is_covid = sub["season"].isin(COVID_SEASONS)
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=sub["season"], y=sub["yellow_gap"],
-        marker=dict(color=colors),
-        name="Away minus home yellows",
-        hovertemplate=(
-            "%{y:+.3f} more away bookings per match"
-            "<br>%{customdata[0]:.2f} home · %{customdata[1]:.2f} away"
-            "<extra></extra>"
-        ),
-        customdata=sub[["home_yellows", "away_yellows"]].values,
-    ))
+
+    # Two traces rather than one trace with a colour list, so that the
+    # colour encoding appears in the legend. A reader should not have to
+    # infer from the surrounding text what the two colours mean.
+    for mask, label, colour in (
+        (~is_covid, "Crowds present", T.CROWD),
+        (is_covid, "Empty / restricted stadiums", T.EMPTY),
+    ):
+        part = sub[mask]
+        if part.empty:
+            continue
+
+        # Hover values are formatted here rather than in the template.
+        # Under shared-x hover modes a "%{y:.3f}" specifier can be
+        # overridden by the axis format, which prints full float
+        # precision; pre-formatted strings are immune to that.
+        hover = _hover_strings(part)
+
+        fig.add_trace(go.Bar(
+            x=part["season"], y=part["yellow_gap"],
+            marker=dict(color=colour),
+            name=label,
+            customdata=hover,
+            hovertemplate=(
+                "%{customdata[0]} more away bookings per match"
+                "<br>%{customdata[1]} home · %{customdata[2]} away"
+                "<extra>" + label + "</extra>"
+            ),
+        ))
+
     fig.add_hline(y=0, line=dict(color=T.INK, width=1))
 
     _season_axis(fig, seasons)
@@ -149,11 +166,22 @@ def card_gap_timeline(df: pd.DataFrame, seasons: list[str]) -> go.Figure:
         yaxis_title="Away yellows − home yellows (per match)",
         xaxis_title="Season",
         height=430,
-        showlegend=False,
+        showlegend=True,
+        barmode="overlay",
         bargap=0.28,
-        hovermode="x",
+        hovermode="closest",
     )
     return fig
+
+
+def _hover_strings(part: pd.DataFrame):
+    """Pre-formatted hover values: [signed gap, home mean, away mean]."""
+    return [
+        [f"{g:+.3f}", f"{h:.2f}", f"{a:.2f}"]
+        for g, h, a in zip(
+            part["yellow_gap"], part["home_yellows"], part["away_yellows"]
+        )
+    ]
 
 
 # --------------------------------------------------------------------------

@@ -210,30 +210,39 @@ if ref.empty:
 
 ref = ref.sort_values("gap")
 
-bar = go.Figure(go.Bar(
-    x=ref["gap"], y=ref["referee"], orientation="h",
-    marker=dict(color=[T.CROWD if g > 0 else T.EMPTY for g in ref["gap"]]),
-    hovertemplate=(
-        "<b>%{y}</b><br>%{x:+.3f} extra away bookings per match"
-        "<br>%{customdata[0]:,} matches"
-        "<br>%{customdata[1]:.2f} home · %{customdata[2]:.2f} away yellows"
-        "<extra></extra>"
-    ),
-    customdata=ref[["matches", "home_y", "away_y"]].values,
-))
+bar = go.Figure()
+for label, mask, colour in (
+    ("Booked away teams more", ref["gap"] > 0, T.CROWD),
+    ("Booked home teams more", ref["gap"] <= 0, T.EMPTY),
+):
+    part = ref[mask]
+    if part.empty:
+        continue
+    bar.add_trace(go.Bar(
+        x=part["gap"], y=part["referee"], orientation="h",
+        name=label, marker=dict(color=colour),
+        hovertemplate=(
+            "<b>%{y}</b><br>%{x:+.3f} extra away bookings per match"
+            "<br>%{customdata[0]:,} matches"
+            "<br>%{customdata[1]:.2f} home · %{customdata[2]:.2f} away yellows"
+            "<extra>" + label + "</extra>"
+        ),
+        customdata=part[["matches", "home_y", "away_y"]].values,
+    ))
+
 bar.add_vline(x=0, line=dict(color=T.INK, width=1))
 bar.update_layout(
     title=f"Booking bias by referee ({len(ref)} officials with {min_matches}+ matches)",
     xaxis_title="Away yellows − home yellows (per match)",
     yaxis_title="",
-    height=max(420, 22 * len(ref)),
-    showlegend=False, hovermode="closest",
+    height=max(460, 22 * len(ref)),
+    showlegend=True,
+    barmode="overlay", hovermode="closest",
 )
 st.plotly_chart(bar, width="stretch")
 T.readout(
-    "Amber bars are officials who booked away teams more; steel blue are the few "
-    "who did the opposite. Almost every referee sits on the amber side, so the "
-    "league-wide bias is not the work of a handful of outliers."
+    "Almost every official sits on the amber side, so the league-wide bias is not "
+    "the work of a handful of outliers but a general tendency across the profession."
 )
 
 # --------------------------------------------------------------------------

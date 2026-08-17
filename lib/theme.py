@@ -107,7 +107,12 @@ def _build_template() -> go.layout.Template:
                 bgcolor=INK, bordercolor=INK,
                 font=dict(family=FONT_BODY, size=12, color="#FFFFFF"),
             ),
-            hovermode="x unified",
+            # "closest" rather than "x unified": under shared-x hover a
+            # "%{y:.2f}" specifier in a hovertemplate can be overridden by
+            # the axis format and print full float precision. Charts that
+            # genuinely benefit from a shared label set it locally and
+            # pass an explicit yhoverformat.
+            hovermode="closest",
             separators=".,",
         )
     )
@@ -128,6 +133,10 @@ _CSS = f"""
 
 .stApp {{ background: {PAPER}; }}
 
+/* Trim Streamlit's default top padding: on a laptop screen this alone
+   pushes the headline figures below the fold. */
+.block-container {{ padding-top: 3.4rem !important; padding-bottom: 3rem; }}
+
 html, body, [class*="css"] {{ font-family: {FONT_BODY}; color: {INK}; }}
 
 h1, h2, h3 {{
@@ -136,9 +145,9 @@ h1, h2, h3 {{
     letter-spacing: -0.015em;
     font-weight: 600;
 }}
-h1 {{ font-size: 2.35rem; line-height: 1.1; margin-bottom: .2rem; }}
-h2 {{ font-size: 1.45rem; margin-top: 2.2rem; }}
-h3 {{ font-size: 1.12rem; margin-top: 1.4rem; }}
+h1 {{ font-size: 1.95rem; line-height: 1.15; margin-bottom: .15rem; margin-top: .1rem; }}
+h2 {{ font-size: 1.3rem; margin-top: 1.8rem; }}
+h3 {{ font-size: 1.05rem; margin-top: 1.2rem; }}
 
 /* Eyebrow label above a section: encodes what kind of content follows. */
 .eyebrow {{
@@ -151,10 +160,11 @@ h3 {{ font-size: 1.12rem; margin-top: 1.4rem; }}
 }}
 
 .lede {{
-    font-size: 1.05rem;
-    line-height: 1.6;
+    font-size: .96rem;
+    line-height: 1.55;
     color: {INK_SOFT};
-    max-width: 62ch;
+    max-width: 70ch;
+    margin: .1rem 0 .5rem;
 }}
 
 /* Scoreboard figures */
@@ -181,7 +191,7 @@ h3 {{ font-size: 1.12rem; margin-top: 1.4rem; }}
 }}
 .stat-value {{
     font-family: {FONT_MONO};
-    font-size: 1.85rem;
+    font-size: 1.6rem;
     font-weight: 500;
     color: {INK};
     line-height: 1;
