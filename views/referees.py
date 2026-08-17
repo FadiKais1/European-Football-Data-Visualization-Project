@@ -86,6 +86,97 @@ if not _all.empty:
             "never recorded that season."
         )
 
+    # ----------------------------------------------------------------------
+    # Fouls against cards, by era
+    # ----------------------------------------------------------------------
+    # Carried over from the group's Tableau worksheet "05 - Fouls Discipline
+    # Profile". The joint distribution separates two things a single ratio
+    # collapses: how physical a league is, and how strictly it is refereed.
+
+    st.markdown("### Physicality and strictness are different things")
+    T.lede(
+        "Each point is one league-season: fouls committed on the horizontal axis, "
+        "cards shown on the vertical. Marker shape marks the era. The crosshairs "
+        "are the overall averages."
+    )
+
+    per_season = (
+        _all.groupby(["season", "season_start_year", "league_short"], observed=True)
+        .agg(fouls=("fouls", "mean"), cards=("cards", "mean"),
+             n=("match_id", "size"))
+        .reset_index()
+        .dropna(subset=["fouls", "cards"])
+    )
+
+    if not per_season.empty:
+        per_season = D.add_season_era(per_season)
+
+        quad = go.Figure()
+        quad.add_hline(
+            y=float(per_season["cards"].astype(float).mean()),
+            line=dict(color=T.MUTED, width=1),
+            annotation_text="Average", annotation_position="top left",
+            annotation_font=dict(family=T.FONT_MONO, size=10, color=T.MUTED),
+        )
+        quad.add_vline(
+            x=float(per_season["fouls"].astype(float).mean()),
+            line=dict(color=T.MUTED, width=1),
+            annotation_text="Average", annotation_position="bottom right",
+            annotation_font=dict(family=T.FONT_MONO, size=10, color=T.MUTED),
+        )
+
+        for league in [l for l in D.LEAGUE_ORDER
+                       if l in set(per_season["league_short"])]:
+            for era in D.ERA_ORDER:
+                sub = per_season[
+                    (per_season["league_short"] == league)
+                    & (per_season["season_era"] == era)
+                ]
+                if sub.empty:
+                    continue
+                quad.add_trace(go.Scatter(
+                    x=sub["fouls"].astype(float), y=sub["cards"].astype(float),
+                    mode="markers", name=league, legendgroup=league,
+                    showlegend=(era == D.ERA_ORDER[0]),
+                    marker=dict(
+                        size=9, symbol=D.ERA_SYMBOLS[era],
+                        color=T.LEAGUE_COLORS.get(league),
+                        line=dict(width=1.4, color=T.LEAGUE_COLORS.get(league)),
+                    ),
+                    customdata=list(zip(sub["season"], [era] * len(sub))),
+                    hovertemplate=(
+                        "<b>" + league + "</b> %{customdata[0]}<br>"
+                        "%{x:.1f} fouls · %{y:.2f} cards per match"
+                        "<br>%{customdata[1]}<extra></extra>"
+                    ),
+                ))
+
+        for era in D.ERA_ORDER:
+            quad.add_trace(go.Scatter(
+                x=[None], y=[None], mode="markers", name=era,
+                legendgroup="era", legendgrouptitle_text="Era (marker shape)",
+                marker=dict(size=10, symbol=D.ERA_SYMBOLS[era], color=T.INK_SOFT,
+                            line=dict(width=1.4, color=T.INK_SOFT)),
+                hoverinfo="skip",
+            ))
+
+        quad.update_layout(
+            title="Fouls against cards per match, one point per league-season",
+            xaxis_title="Fouls per match (both teams)",
+            yaxis_title="Cards per match (both teams)",
+            height=540, hovermode="closest",
+            legend=dict(orientation="v", x=1.02, y=1,
+                        xanchor="left", yanchor="top"),
+        )
+        st.plotly_chart(quad, width="stretch")
+        T.readout(
+            "The upper-left quadrant is the interesting one: few fouls but many "
+            "cards, meaning a league punishes strictly rather than one that simply "
+            "fouls a lot. Tracking a single league's markers from circles through "
+            "to triangles shows how its disciplinary character moved across twenty "
+            "years — most leagues drift leftward, committing fewer fouls over time."
+        )
+
 st.markdown("## Individual referees, match by match")
 
 T.caveat(

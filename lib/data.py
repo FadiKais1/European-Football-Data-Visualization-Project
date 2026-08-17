@@ -223,3 +223,39 @@ def season_axis(df: pd.DataFrame) -> list[str]:
         .sort_values("season_start_year")["season"]
         .tolist()
     )
+
+
+# --------------------------------------------------------------------------
+# Season eras
+# --------------------------------------------------------------------------
+# Four five-season blocks, carried over from the group's Tableau workbook,
+# where they were used as a shape encoding. Grouping seasons into eras lets
+# a scatter show change over time without needing twenty separate colours.
+
+ERA_BOUNDS = [
+    (2006, 2010, "2006/07–2010/11"),
+    (2011, 2015, "2011/12–2015/16"),
+    (2016, 2020, "2016/17–2020/21"),
+    (2021, 2025, "2021/22–2025/26"),
+]
+
+ERA_ORDER = [label for _, _, label in ERA_BOUNDS]
+
+# Plotly marker symbols, matching the Tableau shape encoding:
+# circle, square, asterisk, triangle.
+ERA_SYMBOLS = {
+    ERA_ORDER[0]: "circle-open",
+    ERA_ORDER[1]: "square-open",
+    ERA_ORDER[2]: "asterisk",
+    ERA_ORDER[3]: "triangle-up-open",
+}
+
+
+def add_season_era(df: pd.DataFrame) -> pd.DataFrame:
+    """Attach an ordered `season_era` column derived from the start year."""
+    out = df.copy()
+    era = pd.Series(pd.NA, index=out.index, dtype="object")
+    for lo, hi, label in ERA_BOUNDS:
+        era[out["season_start_year"].between(lo, hi)] = label
+    out["season_era"] = pd.Categorical(era, categories=ERA_ORDER, ordered=True)
+    return out

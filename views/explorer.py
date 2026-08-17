@@ -260,40 +260,94 @@ T.readout(
 
 st.markdown("## Which league is the most competitive?")
 T.lede(
-    "A match decided by one goal or fewer is a close match. The higher the "
-    "share, the less predictable the league."
+    "A match decided by one goal or fewer — a draw or a one-goal result — is a "
+    "close match. The higher the share, the less predictable the league."
 )
 
-bal = (
-    matches.assign(_c=(matches["goal_difference"].abs() <= 1))
-    .groupby("league_short", observed=True)
-    .agg(close=("_c", "mean"), n=("match_id", "size"))
-    .reset_index().sort_values("close")
+bal_view = st.radio(
+    "View", ["Rank by season", "Overall share"],
+    horizontal=True, label_visibility="collapsed",
+    help="Rank by season shows leagues trading places over time; "
+         "overall share shows the twenty-season average.",
 )
-bal["close"] = bal["close"].astype(float) * 100
 
-rank = go.Figure(go.Bar(
-    x=bal["close"], y=bal["league_short"], orientation="h",
-    marker=dict(color=[T.LEAGUE_COLORS.get(l, T.MUTED) for l in bal["league_short"]]),
-    text=[f"{v:.1f}%" for v in bal["close"]],
-    textposition="outside",
-    textfont=dict(family=T.FONT_MONO, size=12),
-    hovertemplate="%{y}<br>%{x:.1f}% of matches decided by ≤1 goal"
-                  "<br>%{customdata:,} matches<extra></extra>",
-    customdata=bal["n"],
-))
-rank.update_layout(
-    title="Share of matches decided by one goal or fewer",
-    xaxis_title="Close matches (% of all matches)", yaxis_title="",
-    height=320, showlegend=False, hovermode="closest", bargap=0.35,
-)
-rank.update_xaxes(ticksuffix="%")
-st.plotly_chart(rank, width="stretch")
-T.readout(
-    "A higher share means more matches were decided by a single goal, which is "
-    "usually read as greater competitive balance — though it also reflects how "
-    "much a league scores overall, since high-scoring leagues produce wider margins."
-)
+close_flag = matches.assign(_c=(matches["goal_difference"].abs() <= 1))
+
+if bal_view == "Rank by season":
+    # Bump chart: each league's rank within each season. Carried over from
+    # the group's Tableau worksheet "02 - Competitive Balance Ranking",
+    # where rank over time was the point rather than the overall average.
+    per = (
+        close_flag.groupby(["season", "league_short"], observed=True)["_c"]
+        .mean().mul(100).rename("close_pct").reset_index()
+    )
+    per["rank"] = (
+        per.groupby("season")["close_pct"].rank(ascending=False, method="min")
+    )
+
+    bump = go.Figure()
+    for league in leagues:
+        sub = per[per["league_short"] == league].set_index("season").reindex(seasons).reset_index()
+        bump.add_trace(go.Scatter(
+            x=sub["season"], y=sub["rank"], name=league,
+            mode="lines+markers",
+            line=dict(width=2, color=T.LEAGUE_COLORS.get(league)),
+            marker=dict(size=7),
+            connectgaps=False,
+            customdata=sub["close_pct"],
+            hovertemplate=(
+                "<b>" + league + "</b> %{x}<br>Rank %{y}"
+                "<br>%{customdata:.1f}% close matches<extra></extra>"
+            ),
+        ))
+
+    C.add_covid_band(bump, seasons, label=False)
+    bump.update_xaxes(categoryorder="array", categoryarray=seasons, tickangle=-45)
+    bump.update_yaxes(
+        autorange="reversed", dtick=1,
+        title="Rank (1 = most competitive)",
+    )
+    bump.update_layout(
+        title="Competitive balance rank, by season",
+        xaxis_title="Season", height=420,
+    )
+    st.plotly_chart(bump, width="stretch")
+    T.readout(
+        "Rank 1 sits at the top: the league with the highest share of close "
+        "matches that season. Lines crossing frequently mean no league holds a "
+        "lasting advantage in competitiveness — the ordering is unstable from "
+        "season to season, which a twenty-year average would hide entirely."
+    )
+else:
+    bal = (
+        close_flag.groupby("league_short", observed=True)
+        .agg(close=("_c", "mean"), n=("match_id", "size"))
+        .reset_index().sort_values("close")
+    )
+    bal["close"] = bal["close"].astype(float) * 100
+
+    rank = go.Figure(go.Bar(
+        x=bal["close"], y=bal["league_short"], orientation="h",
+        marker=dict(color=[T.LEAGUE_COLORS.get(l, T.MUTED) for l in bal["league_short"]]),
+        text=[f"{v:.1f}%" for v in bal["close"]],
+        textposition="outside",
+        textfont=dict(family=T.FONT_MONO, size=12),
+        hovertemplate="%{y}<br>%{x:.1f}% of matches decided by ≤1 goal"
+                      "<br>%{customdata:,} matches<extra></extra>",
+        customdata=bal["n"],
+    ))
+    rank.update_layout(
+        title="Share of matches decided by one goal or fewer",
+        xaxis_title="Close matches (% of all matches)", yaxis_title="",
+        height=320, showlegend=False, hovermode="closest", bargap=0.35,
+    )
+    rank.update_xaxes(ticksuffix="%")
+    st.plotly_chart(rank, width="stretch")
+    T.readout(
+        "A higher share means more matches decided by a single goal, usually read "
+        "as greater competitive balance — though it also reflects how much a league "
+        "scores overall, since high-scoring leagues produce wider margins."
+    )
 
 # --------------------------------------------------------------------------
 # Drill-down on the selected cell

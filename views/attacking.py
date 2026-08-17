@@ -85,7 +85,7 @@ def by_season_league(df: pd.DataFrame) -> pd.DataFrame:
     carry equal weight in a league's accuracy figure.
     """
     g = (
-        df.groupby(["season", "league_short"], observed=True)
+        df.groupby(["season", "season_start_year", "league_short"], observed=True)
         .agg(goals=("goals", "sum"), shots=("shots", "sum"),
              sot=("sot", "sum"), matches=("match_id", "size"))
         .reset_index()
@@ -136,46 +136,104 @@ T.readout(
 # 2. Volume against efficiency
 # --------------------------------------------------------------------------
 
-st.markdown("## More shots, or better shots?")
+st.markdown("## Attacking profile: volume, accuracy and output")
 T.lede(
-    "Each point is one league-season. The horizontal axis is how much a league "
-    "shoots; the vertical axis is how often those shots become goals. If volume "
-    "and efficiency were the same thing, the points would form a rising line."
+    "Each point is one league-season. Marker shape marks the era, so change over "
+    "twenty years is visible without twenty separate colours, and marker size is "
+    "shots on target — a point that is large but low is a league creating chances "
+    "it fails to convert. The crosshairs are the overall averages, splitting the "
+    "plot into four quadrants."
 )
 
+y_choice = st.radio(
+    "Vertical axis",
+    ["Goals per match", "Conversion rate %", "Shot accuracy %"],
+    horizontal=True, label_visibility="collapsed",
+)
+
+agg_era = D.add_season_era(agg)
+
 scatter = go.Figure()
-for league in [l for l in D.LEAGUE_ORDER if l in set(agg["league_short"])]:
-    sub = agg[agg["league_short"] == league]
+
+# Average crosshairs: the quadrant split carried over from the group's
+# Tableau worksheet "04 - Attacking Profile".
+x_avg = float(agg_era["Shots per match"].mean())
+y_avg = float(agg_era[y_choice].astype(float).mean())
+
+scatter.add_hline(y=y_avg, line=dict(color=T.MUTED, width=1),
+                  annotation_text="Average", annotation_position="top left",
+                  annotation_font=dict(family=T.FONT_MONO, size=10, color=T.MUTED))
+scatter.add_vline(x=x_avg, line=dict(color=T.MUTED, width=1),
+                  annotation_text="Average", annotation_position="bottom right",
+                  annotation_font=dict(family=T.FONT_MONO, size=10, color=T.MUTED))
+
+sot = agg_era["Shots on target per match"].astype(float)
+sot_min, sot_max = float(sot.min()), float(sot.max())
+span = (sot_max - sot_min) or 1.0
+
+for league in [l for l in D.LEAGUE_ORDER if l in set(agg_era["league_short"])]:
+    for era in D.ERA_ORDER:
+        sub = agg_era[
+            (agg_era["league_short"] == league) & (agg_era["season_era"] == era)
+        ]
+        if sub.empty:
+            continue
+        sizes = 7 + (sub["Shots on target per match"].astype(float) - sot_min) / span * 11
+        scatter.add_trace(go.Scatter(
+            x=sub["Shots per match"].astype(float),
+            y=sub[y_choice].astype(float),
+            mode="markers",
+            name=league,
+            legendgroup=league,
+            showlegend=(era == D.ERA_ORDER[0]),
+            marker=dict(
+                size=sizes,
+                symbol=D.ERA_SYMBOLS[era],
+                color=T.LEAGUE_COLORS.get(league),
+                line=dict(width=1.4, color=T.LEAGUE_COLORS.get(league)),
+            ),
+            customdata=list(zip(
+                sub["season"], [era] * len(sub),
+                sub["Shots on target per match"].astype(float),
+            )),
+            hovertemplate=(
+                "<b>" + league + "</b> %{customdata[0]}<br>"
+                "%{x:.1f} shots per match<br>"
+                + y_choice + ": %{y:.2f}<br>"
+                "%{customdata[2]:.1f} on target · %{customdata[1]}<extra></extra>"
+            ),
+        ))
+
+# A second, marker-only legend explaining the shape encoding.
+for era in D.ERA_ORDER:
     scatter.add_trace(go.Scatter(
-        x=sub["Shots per match"].astype(float),
-        y=sub["Conversion rate %"].astype(float),
-        name=league, mode="markers",
-        marker=dict(size=9, color=T.LEAGUE_COLORS.get(league),
-                    line=dict(width=0.5, color="white")),
-        text=sub["season"],
-        hovertemplate=(
-            "<b>" + league + "</b> %{text}<br>"
-            "%{x:.1f} shots per match<br>%{y:.2f}% converted<extra></extra>"
-        ),
+        x=[None], y=[None], mode="markers", name=era,
+        legendgroup="era", legendgrouptitle_text="Era (marker shape)",
+        marker=dict(size=10, symbol=D.ERA_SYMBOLS[era], color=T.INK_SOFT,
+                    line=dict(width=1.4, color=T.INK_SOFT)),
+        hoverinfo="skip",
     ))
 
 scatter.update_layout(
-    title="Shot volume against conversion rate, one point per league-season",
+    title=f"Shots per match against {y_choice.lower()}, one point per league-season",
     xaxis_title="Shots per match (both teams)",
-    yaxis_title="Conversion rate (% of shots scored)",
-    height=470, hovermode="closest",
+    yaxis_title=y_choice,
+    height=560, hovermode="closest",
+    legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"),
 )
-scatter.update_yaxes(ticksuffix="%")
+if y_choice.endswith("%"):
+    scatter.update_yaxes(ticksuffix="%")
 st.plotly_chart(scatter, width="stretch")
 
 corr = float(
-    agg[["Shots per match", "Conversion rate %"]].astype(float).corr().iloc[0, 1]
+    agg_era[["Shots per match", "Conversion rate %"]].astype(float).corr().iloc[0, 1]
 )
 T.readout(
-    f"The correlation between shot volume and conversion is {corr:+.2f}. "
+    f"The correlation between shot volume and conversion rate is {corr:+.2f}. "
     + (
-        "The negative sign means league-seasons that shoot more tend to convert a "
-        "smaller share — shooting more often includes shooting from worse positions."
+        "The negative sign means league-seasons that shoot more convert a smaller "
+        "share — shooting more often includes shooting from worse positions, so "
+        "volume and efficiency are separate qualities rather than one."
         if corr < -0.1 else
         "Volume and efficiency are close to independent: shooting more does not "
         "reliably mean scoring more per shot."
@@ -239,6 +297,47 @@ sankey.update_layout(
 )
 st.plotly_chart(sankey, width="stretch")
 
+# ------------------------------------------------------------------
+# Conditional probabilities
+# ------------------------------------------------------------------
+# The Sankey encodes raw counts, so its band widths mix two things:
+# how often a situation arises, and what it is worth. The matrix below
+# normalises each row to 100%, which is what the section's question
+# actually asks. Carried over from the group's Tableau worksheet
+# "07 - HT FT Transition".
+
+row_pct = cross.div(cross.sum(axis=1), axis=0) * 100
+
+matrix = go.Figure(go.Heatmap(
+    z=row_pct.values,
+    x=[FT_LABEL[k] for k in FT_KEYS],
+    y=[HT_LABEL[k] for k in HT_KEYS],
+    colorscale=[[0, "#F2F4F2"], [0.5, T.CROWD_LIGHT], [1, T.EMPTY]],
+    zmin=0, zmax=100,
+    text=[[f"{v:.1f}%" for v in row] for row in row_pct.values],
+    texttemplate="%{text}",
+    textfont=dict(family=T.FONT_MONO, size=14),
+    customdata=cross.values,
+    hovertemplate=(
+        "%{y} → %{x}<br>%{z:.1f}% of those matches"
+        "<br>%{customdata:,} matches<extra></extra>"
+    ),
+    colorbar=dict(
+        title=dict(text="% of row", font=dict(size=11)),
+        thickness=12, len=0.85, outlinewidth=0, ticksuffix="%",
+        tickfont=dict(family=T.FONT_MONO, size=10),
+    ),
+    xgap=3, ygap=3,
+))
+matrix.update_layout(
+    title="Where each half-time position ends up (each row totals 100%)",
+    xaxis_title="Full-time result", yaxis_title="",
+    height=360, hovermode="closest",
+)
+matrix.update_xaxes(showgrid=False, side="top")
+matrix.update_yaxes(showgrid=False, autorange="reversed")
+st.plotly_chart(matrix, width="stretch")
+
 lead_rows = cross.loc["H"].sum()
 lead_held = cross.loc["H", "H"]
 level_rows = cross.loc["D"].sum()
@@ -251,7 +350,11 @@ T.readout(
     f"{level_home / level_rows * 100:.0f}% against the away side's "
     f"{cross.loc['D', 'A'] / level_rows * 100:.0f}% — home advantage operating in the "
     f"second half alone. Full reversals, where the team behind at the break wins, "
-    f"account for {comeback:,} matches ({comeback / cross.values.sum() * 100:.1f}%)."
+    f"account for {comeback:,} matches ({comeback / cross.values.sum() * 100:.1f}%). "
+    "The two charts answer different questions: the flow diagram shows how many "
+    "matches take each path, while the matrix removes that difference in frequency "
+    "by normalising each row, so a half-time position can be judged on what it is "
+    "worth rather than on how often it occurs."
 )
 
 # --------------------------------------------------------------------------
