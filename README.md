@@ -4,7 +4,7 @@ An interactive analysis of **36,197 football matches** from Europe's Big Five
 leagues (2006/07–2025/26), using the COVID-19 empty-stadium period as a natural
 experiment on the source of home advantage.
 
-**🔗 Live application:** https://big5-football-visualization-tu7tvbq7vts4qkdehkkcuu.streamlit.app/
+**🔗 Live application:** _add the Streamlit Cloud URL here after deploying_
 
 > Course project in Information Visualization.
 > Tom Rosenberg · Ofir Kaplan · Fadi Kees · Daniel Ifrim
@@ -27,15 +27,21 @@ separate because they always occur together. In 2020 they came apart.
 
 Referees booked away teams 0.31 times more per match than home teams —
 consistently, for fourteen seasons. In empty stadiums that bias fell to 0.015,
-effectively zero, and returned to 0.271 when supporters came back. The *fouls*
-gap barely moved across the same period: away teams did not start fouling less,
-they stopped being punished more for it.
+effectively zero, and returned to 0.271 when supporters came back.
+
+Every home-away gap narrowed without a crowd, so the crowd affected play as well
+as officiating — but by very different amounts. The shooting advantage retained
+51% of its size and corners 40%, while the booking advantage retained under 5%.
+Holding conduct constant sharpens it further: per 100 fouls committed, away teams
+were 1.68 percentage points more likely to be booked with a crowd present, 0.36
+without one, and 1.84 once crowds returned.
 
 ## Dashboards
 
 | Page | What it does |
 |---|---|
 | **Home** | Landing page: the dataset, the question, the headline finding, and links to each dashboard |
+| **The Story** | A seven-step guided walkthrough of the argument, with confidence intervals and significance tests |
 | **Home Advantage** | How has home advantage changed, and how does it differ by league? |
 | **Evolution of the Big Five** | Any measure across all league-seasons, with click-to-drill detail |
 | **Attacking & Efficiency** | How have attacking volume and scoring efficiency changed? |
@@ -97,6 +103,7 @@ shortly before submitting so a reviewer arrives at a running application.
 streamlit_app.py              Entry point; declares navigation
 views/
   home.py                     Landing page
+  story.py                    Seven-step guided walkthrough
   home_advantage.py           Dashboard 1
   explorer.py                 Dashboard 2
   attacking.py                Dashboard 3
@@ -106,6 +113,7 @@ views/
   about.py                    Method, assumptions, limitations
 lib/
   theme.py                    Colour tokens, CSS, Plotly template
+  stats.py                    Wilson intervals, proportion and Welch tests
   data.py                     Cached loading, shared filters, aggregation
   charts.py                   Reusable figure builders
 preprocessing/

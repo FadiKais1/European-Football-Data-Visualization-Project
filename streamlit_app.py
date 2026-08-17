@@ -33,6 +33,11 @@ START = [
         icon=":material/home:",
         default=True,
     ),
+    st.Page(
+        "views/story.py",
+        title="The Story",
+        icon=":material/auto_stories:",
+    ),
 ]
 
 DASHBOARDS = [
@@ -65,6 +70,11 @@ DASHBOARDS = [
         "views/league_profiles.py",
         title="League Profiles",
         icon=":material/insights:",
+    ),
+    st.Page(
+        "views/linked.py",
+        title="Linked Views",
+        icon=":material/hub:",
     ),
 ]
 

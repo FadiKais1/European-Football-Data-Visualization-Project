@@ -227,9 +227,9 @@ T.stat_row([
 
 st.markdown("## Are away teams booked more because they foul more?")
 T.lede(
-    "A booking gap could simply reflect a fouling gap. Comparing the two "
-    "separates the explanations: if away sides commit similar fouls but collect "
-    "more cards, the difference sits with the official, not the players."
+    "A booking gap could reflect a fouling gap rather than a refereeing one. "
+    "Fouling did change between the periods, so cards alone cannot settle it — "
+    "but cards per foul holds conduct constant and isolates the judgement."
 )
 
 rows = []
@@ -264,10 +264,10 @@ if not comp.empty:
     )
     st.plotly_chart(fig, width="stretch")
     T.readout(
-        "The fouls bar barely moves between conditions while the yellow-card bar "
-        "collapses. Away teams did not start fouling less in empty stadiums — they "
-        "stopped being punished more for it, which places the change with the "
-        "officials rather than the players."
+        "Both bars move: fouling itself changed in empty stadiums, so cards alone "
+        "cannot separate conduct from judgement. The third bar does separate them — "
+        "cards per foul holds conduct constant and still collapses, which means the "
+        "same offence became less likely to be punished more harshly for the away side."
     )
 
 # --------------------------------------------------------------------------

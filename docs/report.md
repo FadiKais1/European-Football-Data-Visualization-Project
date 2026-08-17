@@ -23,7 +23,7 @@
 
 Because of the volume of data, the number of variables and the temporal dimension, these patterns cannot be identified from raw tables. One league-season is 380 rows; the full dataset is 36,197 matches across five competitions and twenty years. Patterns that become obvious once drawn — a refereeing bias that holds steady for fourteen seasons and then vanishes, or five leagues slowly converging on a common disciplinary standard — are effectively invisible in a spreadsheet. The project therefore uses interactive visualization to make these trends, differences and anomalies explorable.
 
-**Why the topic matters.** Analysing 20 seasons distinguishes short-term fluctuation from long-term change, identifies which characteristics remain stable, and shows whether change occurs across European football as a whole or within individual leagues. The period also contains an analytically valuable event: between March 2020 and mid-2021 matches were played in empty or severely restricted stadiums while every other condition — teams, competitions, pitches, travel — stayed in place. This is a rare natural experiment in a domain where controlled experiments are impossible, and it allows a long-standing question about home advantage to be examined directly rather than argued from theory.
+**Why the topic matters.** Analysing 20 seasons distinguishes short-term fluctuation from long-term change and shows whether change occurs across European football as a whole or within individual leagues. The period also contains an analytically valuable event: between March 2020 and mid-2021 matches were played in empty stadiums while every other condition — teams, competitions, pitches, travel — stayed in place. That is a rare natural experiment in a domain where controlled experiments are impossible, and it allows a long-standing question about home advantage to be examined directly rather than argued from theory.
 
 **Potential users.** Football and sports data analysts comparing trends across leagues and eras; sports journalists needing evidence and visual material; fans exploring leagues, seasons and teams beyond basic statistics; researchers and students in sports analytics; and referee or competition administrators, for whom the disciplinary findings have direct professional relevance.
 
@@ -60,17 +60,12 @@ Matches per league: Premier League, Serie A and La Liga 7,600 each; Ligue 1 7,27
 |---|---|---|
 | Date | Date | Match date |
 | HomeTeam / AwayTeam | String | The two teams |
-| FTHG / FTAG | Integer | Full time goals, home / away |
-| FTR | Categorical | Full time result (H = home win, D = draw, A = away win) |
-| HTHG / HTAG | Integer | Half time goals, home / away |
-| HTR | Categorical | Half time result |
-| Referee | String | Match referee |
-| HS / AS | Integer | Shots, home / away |
-| HST / AST | Integer | Shots on target, home / away |
-| HF / AF | Integer | Fouls committed, home / away |
-| HC / AC | Integer | Corners, home / away |
-| HY / AY | Integer | Yellow cards, home / away |
-| HR / AR | Integer | Red cards, home / away |
+| FTHG / FTAG, FTR | Integer, categorical | Full time goals and result (H / D / A) |
+| HTHG / HTAG, HTR | Integer, categorical | The same three at half time |
+| Referee | String | Match official |
+| HS / AS, HST / AST | Integer | Shots and shots on target, home / away |
+| HF / AF, HC / AC | Integer | Fouls committed and corners, home / away |
+| HY / AY, HR / AR | Integer | Yellow and red cards, home / away |
 
 **Missing values.** The dataset is largely complete; full-time goals and results are complete throughout. Three gaps were investigated individually:
 
@@ -90,9 +85,7 @@ The raw data arrived as 100 separate files. Pre-processing was implemented as a 
 
 **2. League and season identification.** A `league` attribute was added from each file's folder. A `season` attribute was extracted from the filename by regular expression (`season-2021.csv` → `2020/21`), together with a numeric `season_start_year` — necessary because season labels are strings and would otherwise sort alphabetically rather than chronologically in axes and dropdowns.
 
-**3. Date processing.** `Date` was converted to a true date type with the conversion checked for failures, and year, month and day-of-week were derived from it.
-
-**4. Column renaming.** Abbreviated names were replaced with clear internal names (`FTHG` → `home_goals`). Full descriptive labels are held separately and applied in the interface, keeping the code readable while the user still sees complete descriptions.
+**3. Date processing and renaming.** `Date` was converted to a true date type with the conversion checked for failures, and year, month and day-of-week derived from it. Abbreviated column names were replaced with clear internal names (`FTHG` → `home_goals`), with full descriptive labels held separately for the interface.
 
 **5. Type correction.** Count statistics were stored as **nullable integers**. This matters analytically: with an ordinary integer type a missing value must be replaced by something, and replacing it with zero would record "no shots taken" for a match where shots were never recorded, biasing every average computed from that column.
 
@@ -104,7 +97,7 @@ The raw data arrived as 100 separate files. Pre-processing was implemented as a 
 
 **7. Integrity checks.** The merged dataset was tested for internal contradictions. All passed: no duplicate fixtures; no match where the result letter disagrees with the goal columns; no half-time score exceeding its full-time score; no shots-on-target total exceeding the shots total. Club names were checked for inconsistent spellings across twenty seasons — no club appears under two names and no name appears in two leagues, so no name-normalisation mapping was needed.
 
-**8. Derived measures.** Roughly twenty analytical fields were computed once here rather than repeatedly in the application: points (3–1–0), goal difference, total goals, shot accuracy and conversion (guarded against division by zero), and home-minus-away differentials for shots, shots on target, corners, fouls, yellow cards, red cards and total cards.
+**8. Derived measures.** Roughly twenty analytical fields were computed once here rather than repeatedly in the application: points (3–1–0), goal difference, total goals, shot accuracy and conversion (guarded against division by zero), and home-minus-away differentials for shots, corners, fouls and cards.
 
 **9. Crowd-status classification.** The source has no attendance column, so each match was labelled by the conditions it was played under: *crowds present* before 8 March 2020, *empty or restricted* until 30 June 2021, *crowds returned* thereafter. This derived variable is what makes the natural experiment in supporting question 1 directly analysable. It is an approximation, documented as such in section 5.
 
@@ -120,7 +113,7 @@ The raw data arrived as 100 separate files. Pre-processing was implemented as a 
 | `team_matches.parquet` | 72,394 | 34 | One row per team per match (long format) |
 | `data_quality.md` | — | — | Auto-generated data quality report |
 
-The quality report is produced by the same script that produces the data, computing its figures from the dataset itself so it cannot fall out of date if the pipeline is re-run.
+The quality report is produced by the same script as the data, computing its figures from the dataset itself so it cannot fall out of date.
 
 ---
 
@@ -134,7 +127,7 @@ The quality report is produced by the same script that produces the data, comput
 | **pathlib**, **re**, **argparse** | File discovery; season extraction from filenames; command-line interface for reproducibility |
 | **Streamlit** | Multi-page web application: layout, navigation, widgets, caching, session state |
 | **Plotly** (`graph_objects`) | All visualizations — line, bar, heatmap, scatter, slope, dumbbell and dot-plot charts, plus interaction and selection events |
-| **NumPy** | Numerical operations and correlation calculations |
+| **NumPy** | Numerical operations, correlations, and the confidence intervals and hypothesis tests in `lib/stats.py` |
 | **Custom CSS** and **Google Fonts** (Fraunces, Inter, IBM Plex Mono) | Typography, colour tokens and component styling |
 | **Streamlit Community Cloud** | Hosting, providing a public URL usable from any browser |
 | **GitHub** | Source code hosting and deployment source |
@@ -146,17 +139,19 @@ The quality report is produced by the same script that produces the data, comput
 
 ## 5. The solution
 
-The solution is an interactive web application of **six linked dashboards**, built with Streamlit and Plotly and deployed publicly. Each supporting research question has a dedicated dashboard.
+The solution is an interactive web application of **seven linked dashboards**, a guided story walkthrough and a landing page, built with Streamlit and Plotly and deployed publicly. Each supporting research question has a dedicated dashboard.
 
 | Page | Question | Role |
 |---|---|---|
 | Home | — | Landing page: dataset, research questions, headline finding, and navigation to each dashboard |
+| The Story | — | A seven-step guided walkthrough of the central argument, one claim and one chart per step |
 | 1. Home Advantage | Supporting 1 | Establishes home advantage, its variation by league, and its response to empty stadiums |
 | 2. Evolution of the Big Five | Main | Any measure across all league-seasons, result composition, competitive balance, with drill-down |
 | 3. Attacking and Efficiency | Supporting 2 | Attacking volume against scoring efficiency, and what a half-time lead is worth |
 | 4. Team Deep-Dive | Main (depth) | From league averages down to individual clubs |
 | 5. Referees and Discipline | Supporting 3 | League refereeing strictness, and the officiating mechanism at referee level |
 | 6. League Profiles | Supporting 4 | What distinguishes each league, and whether the leagues are converging |
+| 7. Linked Views | Main | Four coordinated views over one dataset, each of which both drives and responds to a shared selection |
 
 ### The main visualization
 
@@ -166,13 +161,15 @@ Directly beneath sits the chart explaining the mechanism: **the difference betwe
 
 ### How the application is used
 
-It is designed to be read in sequence but explored freely. A user arrives on the **Home** page, which states the dataset, the research questions and the headline finding, and links to the dashboard that answers each question — so the structure of the project is visible before any single chart is read. From there a user typically moves to **Dashboard 1**, which presents the argument. Having seen the claim, they can test it: **Dashboard 2** shows any of nine measures across every league-season as a heatmap, so the user can look for the empty-stadium band where it should appear and confirm its absence where it should not. **Dashboard 3** separates attacking volume from scoring efficiency. **Dashboard 4** moves from averages to individual clubs, asking whether the pattern holds for a team the user knows. **Dashboard 5** tests the mechanism at the level of individual referees. **Dashboard 6** steps back to how the five leagues differ and whether they are converging.
+It is designed to be read in sequence but explored freely. A user arrives on the **Home** page, which states the dataset, the research questions and the headline finding, and links to the dashboard answering each — so the structure is visible before any chart is read. **Dashboard 1** then presents the argument, and the rest allow it to be tested: **2** shows any measure across every league-season, **3** separates attacking volume from efficiency, **4** drills to individual clubs, **5** tests the mechanism at referee level, **6** compares league profiles, and **7** offers four fully cross-filtered views.
 
 ### Interaction
 
 **Global filters with cross-page persistence.** League and season-range filters live in the sidebar and are held in session state, so a selection made on one dashboard remains in force on the others. The five pages behave as one linked system rather than five independent pages.
 
-**Linking and brushing through selection events.** On Dashboard 2, clicking a cell in the league-season heatmap drives the detail panel beneath it, which redraws with that season's home and away points table and its distribution of match outcomes. The user selects the anomaly they noticed in the overview and immediately sees its underlying detail.
+**Linking and brushing through selection events.** Two mechanisms are used. On Dashboard 2, clicking a cell in the league-season heatmap drives the detail panel beneath it, which redraws with that season's home and away points table and its distribution of outcomes.
+
+Dashboard 7 goes further and implements *coordinated multiple views*. Four charts share one selection held in session state: a league ranking, a league-season grid, a timeline, and a detail panel. Each chart both writes to the selection and reads from it, so there is no master chart — clicking a league in the ranking, a cell in the grid, or dragging a box across the timeline all produce the same state, and every view redraws. Unselected leagues are greyed rather than hidden, so a selection is read against the whole rather than in place of it, and a banner reports what is currently selected with a control to release it.
 
 **Local controls and detail on demand.** Each dashboard offers controls suited to its question — a league-split toggle, measure selectors, a crowd-condition selector, minimum-match thresholds for rankings, an era slider. Thresholds are exposed rather than fixed because the right cut-off depends on the question being asked. Every chart supplies values, units and underlying match counts on hover, following overview-first, detail-on-demand.
 
@@ -184,18 +181,31 @@ It is designed to be read in sequence but explored freely. A user arrives on the
 
 **Why this use of colour.** Colour encodes the analytical variable rather than decorating the page: amber for matches played before a crowd, steel blue for empty stadiums. Because amber returns in the third position of every crowd-condition chart, the palette itself carries the finding — the effect disappears and comes back. Wherever colour carries meaning that is not already given by an axis label, the categories are exposed in a legend rather than explained only in the surrounding text, so no chart depends on its caption to be readable. League colours were chosen to stay distinguishable in greyscale and under common forms of colour vision deficiency.
 
+### Statistical support
+
+Because the project's central claim is that a proportion changed, every headline figure is reported with a 95% confidence interval, and the two key comparisons are tested formally. Wilson score intervals are used rather than the textbook normal approximation, since they remain accurate for the smaller subsets — the empty-stadium window contains 2,255 matches, and individual leagues within it only a few hundred.
+
+The home win rate fell 5.84 percentage points when stadiums emptied (95% CI [3.73, 7.96], p < 0.001) and rose 3.22 points when crowds returned (95% CI [0.95, 5.49], p = 0.006). The booking bias fell 0.295 cards per match (95% CI [0.223, 0.368], p < 0.001, Welch's test) and recovered by 0.256 (p < 0.001).
+
+Each league was also tested separately, and the results are displayed as a forest plot on the Home Advantage dashboard. All five moved in the same direction; four reach significance individually, while Serie A does not (−4.03 points, 95% CI [−8.52, +0.45], p = 0.081). The leagues falling short of significance have the widest intervals rather than the smallest effects, which is what a few hundred matches produce. Reporting this openly matters more than reporting a uniform result: five independently administered competitions moving together is the substance of the argument, and overstating the individual tests would weaken rather than strengthen it.
+
+Two further checks address the most obvious alternative explanations. First, if a different mix of teams happened to be playing, the effect would be an artefact of composition; pairing every club with its own earlier record removes that, since squad quality, stadium and league are then held constant. Across the 92 clubs that played in both periods, home advantage fell by an average of 12.1 percentage points (95% CI [8.9, 15.4], p < 0.001), and 71 of the 92 declined. Second, the cards-per-foul comparison described in section 7 holds player conduct constant and still shows the disciplinary gap collapsing and recovering.
+
+The tests are implemented directly on NumPy in `lib/stats.py` rather than by adding a statistics dependency.
+
 ### Advantages
 
 - **It answers a question that could not be answered without it.** The disappearance and return of referee bias is invisible in the raw files.
-- **Every claim is checkable** — filters and toggles let the user reproduce or challenge each statement rather than accept a static chart.
-- **The six dashboards form a genuine hierarchy** — argument, exploration, drill-down, mechanism, context — not five variations of one view.
-- **Limitations are visible in the product**, beside the charts they qualify, rather than buried in documentation.
+- **The central claim is quantified, not asserted** — confidence intervals, formal tests, a per-league forest plot, and two robustness checks against the obvious alternative explanations.
+- **Every claim is checkable**: filters, toggles and cross-filtering let a user reproduce or challenge each statement rather than accept a static chart.
+- **The dashboards form a genuine hierarchy** — argument, exploration, drill-down, mechanism, context — not variations of one view.
+- **Limitations are visible in the product**, beside the charts they qualify.
 - **The pipeline is reproducible**: one command regenerates the datasets and the quality report from the raw files.
 
 ### Disadvantages and limitations
 
 - **Streamlit reloads the page on interaction**, so cross-filtering is less immediate than in a purpose-built JavaScript application; caching reduces but does not remove the redraw.
-- **Selection-based linking exists on one dashboard only.** Plotly selection events work well for the Dashboard 2 heatmap, but fully brushable linking across every page would have needed a different framework.
+- **Cross-filtering is confined to Dashboard 7.** Extending coordinated selection across every page would have required a different framework.
 - **Crowd status is inferred, not measured.** No attendance data exists in the source, so the classification is date-based and approximate; policy varied by country and club, and some matches in the middle window had partial crowds.
 - **Dashboard 4 covers one league**, since referee names exist only for the Premier League. The mechanism is demonstrated, not proven Europe-wide.
 - **The empty-stadium window is short** — about 2,255 matches, ample for league-level conclusions but thin for individual clubs and referees, hence the sample-size warnings on those views.
@@ -205,12 +215,14 @@ It is designed to be read in sequence but explored freely. A user arrives on the
 
 ## 6. Findings
 
-**Home advantage (Q1).** Across all 36,197 matches, home teams won 45.1% and away teams 29.3%, averaging 1.61 points per match at home against 1.14 away. Home advantage exists in all five leagues, largest in La Liga (46.9% home wins) and smallest in Serie A (44.2%). The crowd is a substantial component of it: 46.2% home wins with crowds, 40.3% in empty stadiums, 43.5% after they returned — and the drop appears in all five leagues.
+**Home advantage (Q1).** Home teams won 45.1% of all matches and away teams 29.3%, averaging 1.61 points per match at home against 1.14 away. The advantage exists in all five leagues, largest in La Liga (46.9%) and smallest in Serie A (44.2%). The crowd is a substantial component: 46.2% home wins with crowds, 40.3% in empty stadiums, 43.5% after they returned — a fall of 5.84 percentage points (95% CI [3.73, 7.96], p < 0.001) and a partial recovery of 3.22 points (p = 0.006). All five leagues moved in the same direction.
 
-**Attacking performance (Q2).** Scoring has risen modestly, from 2.48 goals per match in 2006/07 to 2.76 in 2025/26, but volume and efficiency have not moved together. Across all league-seasons the correlation between shots per match and conversion rate is negative: shooting more often means shooting from worse positions. The Premier League has the highest shot accuracy (41.5% of shots on target) while conversion rates sit within one percentage point across all five leagues (11.6–12.1%), so leagues differ far more in how much they shoot than in how well they finish. A half-time lead converts to a home win 79% of the time, and from level at half-time the home side still wins substantially more often than the away side — home advantage operating in the second half alone.
+**Attacking performance (Q2).** Scoring rose modestly, from 2.48 goals per match in 2006/07 to 2.76 in 2025/26, but volume and efficiency did not move together: the correlation between shots per match and conversion rate across league-seasons is negative, so shooting more means shooting from worse positions. The Premier League has the highest shot accuracy (41.5%), while conversion sits within one percentage point across all five leagues — the leagues differ far more in how much they shoot than in how well they finish. A half-time lead converts to a home win 79% of the time.
 
-**Fouls and discipline (Q3).** The strongest result in the project. Referees showed away teams about 0.31 more yellow cards per match than home teams for fourteen consecutive seasons; the gap fell to 0.015 in empty stadiums and recovered to 0.271 afterwards. Crucially the *fouls* gap barely moved across the same period: away teams did not begin fouling less, they stopped being punished more for it. This locates the change with the officials rather than the players.
+**Fouls and discipline (Q3).** Referees showed away teams about 0.31 more yellow cards per match than home teams for fourteen consecutive seasons; the gap fell to 0.015 in empty stadiums and recovered to 0.271.
 
-**League profiles (Q4).** The leagues keep recognisable identities — Serie A and La Liga are the most heavily refereed (4.71 and 5.31 yellow cards per match against the Premier League's 3.50), the Bundesliga the highest-scoring (2.99 goals per match) — but they have converged sharply. Since 2007/08 the spread between leagues has fallen from about 6.0 to 1.8 in fouls per match, from 0.86 to 0.31 in yellow cards and from 3.2 to 0.74 in shots. Goals are the exception, showing no convergence. European football has grown more uniform in how it is officiated and how intensely it is played, while retaining distinct attacking characters.
+Interpreting this required care, and the analysis was revised once the differentials were examined properly. *Every* home-away gap narrowed without a crowd, not only the disciplinary one — the shooting advantage retained 51% of its size, shots on target 50%, corners 40%. What separates them is magnitude: the booking advantage retained under 5%. The cleanest evidence holds conduct constant. Measured as cards per 100 fouls committed, away teams were 1.68 percentage points more likely to be punished than home teams with crowds present, 0.36 points in empty stadiums, and 1.84 points once crowds returned. Since the offence is held constant, this cannot be explained by away teams fouling differently. The crowd affected both players and officials, but its effect on officiating was close to total while its effect on play was partial.
 
-**Interpretation and caution.** The COVID comparison is observational, not a randomised experiment. Other things changed in 2020, including fixture congestion and the move to five substitutions. The evidence for the crowd explanation rests on three properties of the pattern: it appears in five independently administered leagues; it reverses when crowds return; and it appears in the disciplinary measures a crowd could plausibly influence while leaving shot and corner counts largely unaffected. That combination is difficult to explain by scheduling or substitution rules.
+**League profiles (Q4).** The leagues keep recognisable identities — Serie A and La Liga are the most heavily refereed (4.71 and 5.31 cards per match against the Premier League's 3.50), the Bundesliga the highest-scoring (2.99 goals) — but they have converged sharply. Since 2007/08 the spread between leagues has fallen from about 6.0 to 1.8 in fouls per match, 0.86 to 0.31 in cards, and 3.2 to 0.74 in shots. Goals are the exception. European football has grown more uniform in how it is officiated and how intensely it is played, while retaining distinct attacking characters.
+
+**Interpretation and caution.** The comparison is observational, not a randomised experiment, and other things changed in 2020 — fixture congestion and five substitutions among them. The evidence rests on four properties of the pattern: it appears in five independently administered leagues; it reverses when crowds return; it survives pairing every club with its own earlier record (mean fall of 12.1 points, p < 0.001, across 92 clubs); and it persists when conduct is held constant. That combination is difficult to explain by scheduling or substitution rules.
