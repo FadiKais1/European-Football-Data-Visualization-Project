@@ -4,7 +4,7 @@ An interactive analysis of **36,197 football matches** from Europe's Big Five
 leagues (2006/07–2025/26), using the COVID-19 empty-stadium period as a natural
 experiment on the source of home advantage.
 
-**🔗 Live application:** _add the Streamlit Cloud URL here after deploying_
+**🔗 Live application:** https://european-football-data-visualization-project-i3x6vbk4mnx64psp2.streamlit.app/
 
 > Course project in Information Visualization.
 > Tom Rosenberg · Ofir Kaplan · Fadi Kees · Daniel Ifrim
@@ -124,8 +124,9 @@ data/
   team_matches.parquet        72,394 rows, one per team per match
   data_quality.md             Auto-generated quality report
 docs/
-  report.md                   Project report (source)
-  report.docx                 Project report (submission format)
+  Data_Visualization_Report.pdf   The submitted report
+  report.md                       Same report as Markdown, for reading in-repo
+  build_report_pdf.py             Renders the HTML report to a text-layer PDF
 all_pages_test.py             Smoke tests
 ```
 
